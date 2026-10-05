@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestor de Empaques - Control de Diseños</title>
+
+<!-- Librerías externas -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            50:  '#FFF7ED',
+            100: '#FFEDD5',
+            200: '#FED7AA',
+            300: '#FDBA74',
+            400: '#FB923C',
+            500: '#F97316',
+            600: '#EA580C',
+            700: '#C2410C',
+            800: '#9A3412',
+            900: '#7C2D12'
+          },
+          oxford: {
+            50:  '#F9FAFB',
+            100: '#F3F4F6',
+            200: '#E5E7EB',
+            300: '#D1D5DB',
+            400: '#9CA3AF',
+            500: '#6B7280',
+            600: '#4B5563',
+            700: '#374151',
+            800: '#1F2937',
+            900: '#111827'
+          }
+        }
+      }
+    }
+  }
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- CSS propio -->
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-oxford-900 text-oxford-800 min-h-screen flex flex-col justify-center">
+
+<!-- ======================= LOGIN ======================= -->
+<div id="loginSection" class="w-full max-w-md mx-auto p-6">
+  <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-oxford-200 p-8">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-brand-500 text-white rounded-2xl shadow-lg mb-4">
+        <i class="fa-solid fa-box-archive text-3xl"></i>
+      </div>
+      <h2 class="text-2xl font-bold text-oxford-900">Gestor de Empaques</h2>
+      <p class="text-xs text-oxford-500 mt-1">Plataforma de Control e Inspección de Diseños</p>
+    </div>
+    <form onsubmit="Auth.handleLogin(event)" class="space-y-5">
+      <div>
+        <label class="block text-xs font-bold text-oxford-700 uppercase tracking-wider mb-2">Usuario</label>
+        <div class="relative">
+          <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-oxford-400 text-sm"></i>
+          <input type="text" id="loginUser" placeholder="admin" required class="w-full pl-10 pr-4 py-2.5 bg-oxford-50 border border-oxford-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-oxford-700 uppercase tracking-wider mb-2">Contraseña</label>
+        <div class="relative">
+          <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-oxford-400 text-sm"></i>
+          <input type="password" id="loginPass" placeholder="••••••••" required class="w-full pl-10 pr-4 py-2.5 bg-oxford-50 border border-oxford-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+      </div>
+      <button type="submit" id="loginBtn" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-brand-500/30 transition flex items-center justify-center space-x-2 mt-2">
+        <i class="fa-solid fa-right-to-bracket"></i>
+        <span>Iniciar Sesión</span>
+      </button>
+      <p id="loginError" class="text-[11px] text-rose-600 text-center font-semibold hidden">Usuario o contraseña incorrectos.</p>
+    </form>
+    <div class="mt-6 pt-6 border-t border-oxford-100 text-center">
+      <p class="text-[11px] text-oxford-400">Demo: <b>admin/admin123</b> · <b>editor/editor123</b> · <b>visor/visor123</b></p>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= DASHBOARD ======================= -->
+<div id="dashboardSection" class="hidden min-h-screen flex flex-col bg-oxford-50">
+  <header class="bg-oxford-800 text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-brand-500 p-2 rounded-lg text-white"><i class="fa-solid fa-box-archive text-xl"></i></div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">Gestor de Empaques</h1>
+          <p class="text-xs text-oxford-300">Control de Diseños</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 bg-oxford-700 px-3 py-1.5 rounded-lg border border-oxford-600">
+          <i class="fa-solid fa-user-shield text-brand-400 text-sm"></i>
+          <span class="text-xs text-oxford-200 font-medium hidden sm:inline">Rol:</span>
+          <span id="activeRoleBadge" class="text-xs font-bold text-white bg-brand-500 px-2 py-0.5 rounded">Admin</span>
+        </div>
+        <div class="h-6 w-px bg-oxford-600 hidden sm:block"></div>
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center font-bold text-sm" id="userAvatar">EZ</div>
+          <span class="text-sm font-medium hidden md:inline" id="userNameDisplay">Edgar Z.</span>
+          <button onclick="Auth.handleLogout()" class="p-2 text-oxford-300 hover:text-rose-400 hover:bg-oxford-700 rounded-lg transition" title="Cerrar Sesión" aria-label="Cerrar Sesión">
+            <i class="fa-solid fa-power-off text-base"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div class="kpi-card bg-white p-5 rounded-xl border border-oxford-200 shadow-sm flex items-center justify-between" onclick="Render.filterByKpi('ALL')" title="Ver todos">
+        <div><p class="text-xs text-oxford-500 font-semibold uppercase tracking-wider">Total Diseños</p><h3 class="text-2xl font-bold text-oxford-900 mt-1" id="kpiTotal">0</h3></div>
+        <div class="p-3 bg-brand-50 text-brand-600 rounded-lg"><i class="fa-solid fa-folder-open text-xl"></i></div>
+      </div>
+      <div class="kpi-card bg-white p-5 rounded-xl border border-oxford-200 shadow-sm flex items-center justify-between" onclick="Render.filterByKpi('Aprobado')" title="Filtrar aprobados">
+        <div><p class="text-xs text-oxford-500 font-semibold uppercase tracking-wider">Aprobados</p><h3 class="text-2xl font-bold text-emerald-600 mt-1" id="kpiAprobados">0</h3></div>
+        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fa-solid fa-circle-check text-xl"></i></div>
+      </div>
+      <div class="kpi-card bg-white p-5 rounded-xl border border-oxford-200 shadow-sm flex items-center justify-between" onclick="Render.filterByKpi('Desactualizado')" title="Filtrar desactualizados">
+        <div><p class="text-xs text-oxford-500 font-semibold uppercase tracking-wider">Desactualizados</p><h3 class="text-2xl font-bold text-rose-600 mt-1" id="kpiDesactualizados">0</h3></div>
+        <div class="p-3 bg-rose-50 text-rose-600 rounded-lg"><i class="fa-solid fa-triangle-exclamation text-xl"></i></div>
+      </div>
+      <div class="kpi-card bg-white p-5 rounded-xl border border-oxford-200 shadow-sm flex items-center justify-between" onclick="Render.filterByKpi('ALL')" title="Marcas registradas">
+        <div><p class="text-xs text-oxford-500 font-semibold uppercase tracking-wider">Marcas Registradas</p><h3 class="text-2xl font-bold text-brand-600 mt-1" id="kpiMarcas">0</h3></div>
+        <div class="p-3 bg-brand-50 text-brand-600 rounded-lg"><i class="fa-solid fa-tags text-xl"></i></div>
+      </div>
+    </div>
+
+    <!-- MARCAS -->
+    <div class="mb-6">
+      <h2 class="text-xs uppercase font-bold text-oxford-400 mb-3 tracking-wider">Filtrar por Marca:</h2>
+      <div class="flex flex-wrap gap-2" id="brandPills"></div>
+    </div>
+
+    <!-- CONTROLES -->
+    <div class="bg-white p-4 rounded-xl border border-oxford-200 shadow-sm mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+      <div class="flex items-center space-x-3 w-full md:w-auto flex-wrap gap-2">
+        <div class="relative w-full md:w-72">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-oxford-400 text-sm"></i>
+          <input type="text" id="searchInput" onkeyup="Render.resetPageAndRender()" placeholder="Buscar SKU, descripción..." class="w-full pl-10 pr-4 py-2 bg-oxford-50 border border-oxford-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-500">
+        </div>
+        <div class="bg-oxford-100 p-1 rounded-lg flex items-center border border-oxford-200">
+          <button id="viewListBtn" onclick="Render.setViewMode('list')" class="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 transition bg-white text-brand-600 shadow-sm"><i class="fa-solid fa-list-ul"></i><span class="hidden sm:inline">Tabla</span></button>
+          <button id="viewCardsBtn" onclick="Render.setViewMode('cards')" class="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 transition text-oxford-600 hover:text-brand-600"><i class="fa-solid fa-grip-horizontal"></i><span class="hidden sm:inline">Tarjetas</span></button>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2 w-full md:w-auto justify-end flex-wrap gap-2">
+        <select id="statusFilter" onchange="Render.resetPageAndRender()" class="bg-oxford-50 border border-oxford-200 text-oxford-700 text-xs rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="ALL">Todos los Estatus</option>
+          <option value="Aprobado">Aprobado</option>
+          <option value="Desactualizado">Desactualizado</option>
+        </select>
+        <select id="categoryFilter" onchange="Render.resetPageAndRender()" class="bg-oxford-50 border border-oxford-200 text-oxford-700 text-xs rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="ALL">Todas las Categorías</option>
+        </select>
+        <select id="areaFilter" onchange="Render.resetPageAndRender()" class="bg-oxford-50 border border-oxford-200 text-oxford-700 text-xs rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="ALL">Todas las Áreas</option>
+        </select>
+        <button onclick="Excel.exportCSV()" class="bg-oxford-700 hover:bg-oxford-800 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition" title="Exportar CSV">
+          <i class="fa-solid fa-file-csv"></i><span class="hidden sm:inline">CSV</span>
+        </button>
+        <button id="importBtn" onclick="Excel.openImportModal()" class="bg-brand-500 hover:bg-brand-600 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition" title="Importar desde Excel">
+          <i class="fa-solid fa-file-excel"></i><span class="hidden sm:inline">Importar</span>
+        </button>
+        <button id="addBtn" onclick="Modals.openAddModal()" class="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 shadow-sm transition">
+          <i class="fa-solid fa-plus"></i><span>Nuevo Diseño</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TABLA -->
+    <div id="tableViewContainer" class="bg-white rounded-xl border border-oxford-200 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-oxford-100 text-oxford-600 font-bold uppercase tracking-wider border-b border-oxford-200">
+              <th class="py-3.5 px-4 cursor-pointer hover:text-brand-600" onclick="Render.sortBy('sku')">SKU <i class="fa-solid fa-sort text-[10px] ml-1" id="sort-sku"></i></th>
+              <th class="py-3.5 px-4">Descripción</th>
+              <th class="py-3.5 px-4 cursor-pointer hover:text-brand-600" onclick="Render.sortBy('marca')">Marca <i class="fa-solid fa-sort text-[10px] ml-1" id="sort-marca"></i></th>
+              <th class="py-3.5 px-4">Categoría</th>
+              <th class="py-3.5 px-4">Empaque</th>
+              <th class="py-3.5 px-4 cursor-pointer hover:text-brand-600" onclick="Render.sortBy('estatus')">Estatus <i class="fa-solid fa-sort text-[10px] ml-1" id="sort-estatus"></i></th>
+              <th class="py-3.5 px-4">Área / Responsable</th>
+              <th class="py-3.5 px-4 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-oxford-200 text-oxford-700"></tbody>
+        </table>
+        <div id="emptyTable" class="hidden p-10 text-center text-oxford-400 text-sm"><i class="fa-solid fa-inbox text-3xl mb-2 block"></i>No se encontraron resultados</div>
+        <div id="paginationTable" class="px-4 pb-4"></div>
+      </div>
+    </div>
+
+    <!-- TARJETAS -->
+    <div id="cardsViewContainer" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    <div id="emptyCards" class="hidden p-10 text-center text-oxford-400 text-sm"><i class="fa-solid fa-inbox text-3xl mb-2 block"></i>No se encontraron resultados</div>
+    <div id="paginationCards" class="mt-4"></div>
+  </main>
+</div>
+
+<!-- ======================= MODAL DETALLE ======================= -->
+<div id="splitDetailModal" class="fixed inset-0 bg-oxford-900/80 backdrop-blur-md flex items-center justify-center hidden z-50 p-0 sm:p-3 lg:p-6">
+  <div class="bg-white rounded-none sm:rounded-2xl w-full max-w-7xl h-full sm:h-[92vh] shadow-2xl overflow-hidden flex flex-col border border-oxford-200">
+
+    <!-- Header -->
+    <div class="bg-oxford-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between text-white border-b border-oxford-700 flex-shrink-0">
+      <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
+        <div class="bg-brand-500 p-2 rounded-xl text-white shadow-md flex-shrink-0"><i class="fa-solid fa-box-open text-base sm:text-xl"></i></div>
+        <div class="min-w-0">
+          <h3 class="font-bold text-sm sm:text-base truncate" id="modalHeaderTitle">Ficha Técnica</h3>
+          <p class="text-[11px] sm:text-xs text-oxford-300 truncate" id="modalHeaderSubtitle">Inspección integral</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+        <a id="modalExternalDriveBtn" href="#" target="_blank" class="hidden sm:flex px-3 py-2 bg-oxford-700 hover:bg-oxford-600 text-oxford-100 text-xs font-semibold rounded-xl border border-oxford-600 items-center space-x-2 transition">
+          <i class="fa-solid fa-up-right-from-square text-brand-400"></i><span class="hidden md:inline">Abrir en Drive</span>
+        </a>
+        <button onclick="Modals.closeSplitModal()" class="p-1.5 sm:p-2 text-oxford-300 hover:text-white rounded-xl hover:bg-oxford-700 transition" aria-label="Cerrar"><i class="fa-solid fa-xmark text-xl sm:text-2xl"></i></button>
+      </div>
+    </div>
+
+    <!-- TABS (solo visible en < lg) -->
+    <div class="lg:hidden flex bg-oxford-100 border-b border-oxford-200 flex-shrink-0">
+      <button id="tabDetailBtn" onclick="Modals.switchTab('detail')" class="flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 border-brand-500 text-brand-600 transition">
+        <i class="fa-solid fa-circle-info"></i> Detalles
+      </button>
+      <button id="tabPdfBtn" onclick="Modals.switchTab('pdf')" class="flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 border-transparent text-oxford-500 hover:text-brand-600 transition">
+        <i class="fa-solid fa-file-pdf"></i> PDF
+      </button>
+    </div>
+
+    <!-- Contenido -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-0">
+
+      <!-- Panel Info -->
+      <div id="detailPanelInfo" class="lg:col-span-5 overflow-y-auto bg-oxford-50 lg:border-r border-oxford-200 flex flex-col">
+        <div class="p-4 sm:p-6 flex-1">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-oxford-500">SKU del Producto</span>
+            <span id="detailBrandBadge" class="px-3 py-1 bg-brand-100 text-brand-800 rounded-full text-xs font-extrabold uppercase">MARCA</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black text-oxford-900 mb-2 leading-tight break-all" id="detailSku">SKU-XXXX</h2>
+          <p class="text-xs sm:text-sm font-medium text-oxford-700 mb-5 bg-white p-3 rounded-xl border border-oxford-200 shadow-sm" id="detailDesc">Descripción...</p>
+
+          <div class="grid grid-cols-2 gap-3 mb-5">
+            <div class="bg-white p-3 rounded-xl border border-oxford-200 shadow-sm"><span class="text-[10px] font-bold text-oxford-400 uppercase block mb-1"><i class="fa-solid fa-tag text-brand-500 mr-1"></i>Categoría</span><span class="text-xs font-bold text-oxford-800 break-words" id="detailCat">-</span></div>
+            <div class="bg-white p-3 rounded-xl border border-oxford-200 shadow-sm"><span class="text-[10px] font-bold text-oxford-400 uppercase block mb-1"><i class="fa-solid fa-box text-brand-500 mr-1"></i>Empaque</span><span class="text-xs font-bold text-oxford-800 break-words" id="detailEmpaque">-</span></div>
+            <div class="bg-white p-3 rounded-xl border border-oxford-200 shadow-sm"><span class="text-[10px] font-bold text-oxford-400 uppercase block mb-1"><i class="fa-solid fa-shield-halved text-brand-500 mr-1"></i>Estatus</span><span id="detailEstatusBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider badge-aprobado">-</span></div>
+            <div class="bg-white p-3 rounded-xl border border-oxford-200 shadow-sm"><span class="text-[10px] font-bold text-oxford-400 uppercase block mb-1"><i class="fa-solid fa-calendar-check text-brand-500 mr-1"></i>Actualizado</span><span class="text-xs font-bold text-oxford-800" id="detailUAct">-</span></div>
+          </div>
+
+          <div class="bg-brand-50 border border-brand-100 p-4 rounded-xl mb-5">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-brand-500 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow flex-shrink-0"><i class="fa-solid fa-user-gear"></i></div>
+              <div class="min-w-0"><p class="text-[11px] font-bold text-brand-700 uppercase tracking-wider">Área / Gerencia</p><p class="text-xs font-bold text-oxford-900 mt-0.5 break-words" id="detailArea">-</p></div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="text-xs font-bold text-oxford-800 uppercase tracking-wider mb-3 flex items-center justify-between">
+              <span><i class="fa-regular fa-comments text-brand-500 mr-1.5"></i>Comentarios</span>
+              <span class="text-[10px] font-normal text-oxford-400" id="detailCommentsCount">0</span>
+            </h4>
+            <div id="detailCommentsList" class="space-y-2 max-h-40 overflow-y-auto mb-3 pr-1"></div>
+            <div class="flex space-x-2">
+              <input type="text" id="detailNewComment" placeholder="Agregar nota..." class="flex-1 min-w-0 px-3 py-2 bg-white border border-oxford-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none" onkeypress="if(event.key==='Enter') Modals.addDetailComment()">
+              <button onclick="Modals.addDetailComment()" class="bg-oxford-800 hover:bg-oxford-900 text-white px-3 py-2 rounded-xl text-xs font-semibold transition flex-shrink-0" aria-label="Enviar comentario"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones acción (sticky bottom en móvil) -->
+        <div id="detailAdminActions" class="sticky bottom-0 lg:static p-4 lg:p-6 pt-3 lg:pt-4 bg-white lg:bg-transparent border-t border-oxford-200 flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2">
+          <div class="flex gap-2 w-full sm:w-auto">
+            <button id="detailEditBtn" onclick="Modals.editFromDetail()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center space-x-2"><i class="fa-solid fa-pen"></i><span>Editar</span></button>
+            <button id="detailDeleteBtn" onclick="Modals.deleteFromDetail()" class="flex-1 sm:flex-none px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center space-x-2"><i class="fa-solid fa-trash"></i><span>Eliminar</span></button>
+          </div>
+          <a id="modalExternalDriveBtnMobile" href="#" target="_blank" class="sm:hidden px-4 py-2 bg-oxford-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-up-right-from-square"></i><span>Abrir en Drive</span>
+          </a>
+          <button onclick="Modals.closeSplitModal()" class="hidden sm:block px-4 py-2 bg-oxford-200 hover:bg-oxford-300 text-oxford-700 rounded-xl text-xs font-bold transition">Cerrar</button>
+        </div>
+      </div>
+
+      <!-- Panel PDF -->
+      <div id="detailPanelPdf" class="hidden lg:flex lg:col-span-7 bg-oxford-900 relative flex-col min-h-0">
+        <div class="bg-oxford-800/90 text-oxford-300 px-4 py-2 text-xs font-semibold flex items-center justify-between border-b border-oxford-700 flex-shrink-0">
+          <span class="flex items-center space-x-2"><i class="fa-solid fa-file-pdf text-rose-500"></i><span>Visor de PDF</span></span>
+          <span class="text-[11px] text-oxford-400 hidden sm:inline">Google Drive Preview</span>
+        </div>
+        <div class="flex-1 w-full min-h-0 relative">
+          <div id="pdfLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-oxford-900 z-10">
+            <div class="spinner mb-3"></div>
+            <p class="text-oxford-400 text-xs">Cargando PDF...</p>
+          </div>
+          <iframe id="detailPdfFrame" class="w-full h-full border-none" src="" title="Visor PDF" onload="document.getElementById('pdfLoader').style.display='none'"></iframe>
+          <div class="absolute bottom-2 left-2 right-2 bg-oxford-800/90 text-oxford-300 text-[10px] px-3 py-1.5 rounded-lg backdrop-blur flex items-center space-x-2">
+            <i class="fa-solid fa-circle-info text-brand-400 flex-shrink-0"></i>
+            <span>Si no carga, verifica que el archivo esté compartido como "Cualquiera con el enlace".</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ======================= MODAL ADD/EDIT ======================= -->
+<div id="itemModal" class="fixed inset-0 bg-oxford-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+  <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-oxford-200 max-h-[95vh] overflow-y-auto">
+    <div class="bg-oxford-800 px-6 py-4 flex items-center justify-between text-white sticky top-0 z-10">
+      <h3 class="font-bold text-sm" id="modalTitle">Agregar Nuevo Diseño</h3>
+      <button onclick="Modals.closeModal()" class="text-oxford-300 hover:text-white" aria-label="Cerrar"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <form id="modalForm" onsubmit="Modals.saveItem(event)" class="p-6 space-y-4">
+      <input type="hidden" id="editIndex">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-oxford-600 mb-1">SKU *</label>
+          <input type="text" id="formSku" required class="w-full px-3 py-2 bg-oxford-50 border border-oxford-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-oxford-600 mb-1">Marca *</label>
+          <select id="formMarca" required class="w-full px-3 py-2 bg-oxford-50 border border-oxford-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-oxford-600 mb-1">Descripción *</label>
+        <input type="text" id="formDesc" required class="w-full px-3 py-2 bg-oxford-50 border border-oxford-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-oxford-600 mb-1">Categoría *</label>
+          <select id="formCat" required class="w-full px-3 py-2 bg-oxford-50 border border-oxford-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-oxford-600 mb-1">Empaque *</label>
+          <input type="text" id="formEmpaque" required placeholder="Ej. Bolsa, Etiqueta, Caja" class="w-full px-3 py-2 bg-oxford-50 border border-oxford-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-oxford-600 mb-1">Estatus *</label>
+          <select id="formEstatus" class="w-full px-3 py-2 bg-oxford-50 border border-oxford-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <option value="Aprobado">Aprobado</option>
+            <option value="Desactualizado">Desactualizado</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-oxford-600 mb-1">Área / Gerencia</label>
+          <input type="text" id="formArea" placeholder="Ej. Importaciones - Leonela" class="w-full px-3 py-2 bg-oxford-50 border border-oxford-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-oxford-600 mb-1">Link Google Drive *</label>
+        <input type="url" id="formLink" required placeholder="https://drive.google.com/..." class="w-full px-3 py-2 bg-oxford-50 border border-oxford-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+      </div>
+      <div class="pt-4 flex justify-end space-x-3 border-t border-oxford-100">
+        <button type="button" onclick="Modals.closeModal()" class="px-4 py-2 text-xs font-semibold text-oxford-600 hover:bg-oxford-100 rounded-lg transition">Cancelar</button>
+        <button type="submit" class="px-4 py-2 text-xs font-semibold bg-brand-500 text-white rounded-lg hover:bg-brand-600 shadow-sm transition">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ======================= MODAL IMPORTAR ======================= -->
+<div id="importModal" class="fixed inset-0 bg-oxford-900/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+  <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden border border-oxford-200 max-h-[92vh] flex flex-col">
+    <div class="bg-oxford-800 px-6 py-4 flex items-center justify-between text-white flex-shrink-0">
+      <div class="flex items-center space-x-3">
+        <div class="bg-brand-500 p-2 rounded-lg"><i class="fa-solid fa-file-excel text-lg"></i></div>
+        <div>
+          <h3 class="font-bold text-sm">Importar desde Excel</h3>
+          <p class="text-xs text-oxford-300">Formatos soportados: .xlsx, .xls, .csv</p>
+        </div>
+      </div>
+      <button onclick="Excel.closeImportModal()" class="text-oxford-300 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+
+    <div class="p-6 overflow-y-auto flex-1">
+      <div id="importStep1">
+        <div id="dropZone" class="border-2 border-dashed border-oxford-300 hover:border-brand-500 rounded-2xl p-10 text-center transition cursor-pointer bg-oxford-50">
+          <i class="fa-solid fa-cloud-arrow-up text-4xl text-brand-500 mb-3"></i>
+          <p class="text-sm font-semibold text-oxford-700">Arrastra tu archivo aquí o haz clic para seleccionar</p>
+          <p class="text-xs text-oxford-400 mt-1">.xlsx · .xls · .csv</p>
+          <input type="file" id="excelInput" accept=".xlsx,.xls,.csv" class="hidden">
+        </div>
+
+        <div class="mt-4 flex items-center justify-between text-xs flex-wrap gap-2">
+          <button onclick="Excel.downloadTemplate()" class="text-brand-600 hover:text-brand-800 font-semibold flex items-center space-x-1.5">
+            <i class="fa-solid fa-download"></i><span>Descargar plantilla de ejemplo</span>
+          </button>
+          <span class="text-oxford-400 text-[10px]">Columnas: SKU, Descripción, Marca, Categoría, Empaque, Estatus, Área, Gerencia, Link, Última Actualización</span>
+        </div>
+
+        <div id="importError" class="hidden mt-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-lg"></div>
+      </div>
+
+      <div id="importStep2" class="hidden">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <p class="text-sm font-bold text-oxford-800">Previsualización</p>
+            <p class="text-xs text-oxford-500"><span id="importRowCount">0</span> filas · <span id="importNewCount" class="text-emerald-600 font-semibold">0 nuevas</span> · <span id="importUpdateCount" class="text-brand-600 font-semibold">0 a actualizar</span> · <span id="importErrorCount" class="text-rose-600 font-semibold">0 con errores</span></p>
+          </div>
+          <button onclick="Excel.resetImport()" class="text-xs text-oxford-500 hover:text-oxford-800 font-semibold"><i class="fa-solid fa-rotate-left mr-1"></i>Cambiar archivo</button>
+        </div>
+
+        <div class="bg-oxford-50 border border-oxford-200 rounded-xl overflow-hidden mb-4">
+          <div class="overflow-x-auto max-h-64">
+            <table class="w-full text-xs">
+              <thead class="bg-oxford-100 sticky top-0">
+                <tr id="importPreviewHead" class="text-oxford-600 font-bold uppercase tracking-wider"></tr>
+              </thead>
+              <tbody id="importPreviewBody" class="divide-y divide-oxford-200"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="space-y-3 bg-oxford-50 border border-oxford-200 rounded-xl p-4">
+          <p class="text-xs font-bold text-oxford-700 uppercase tracking-wider">Opciones de importación</p>
+          <label class="flex items-start space-x-3 cursor-pointer">
+            <input type="radio" name="importMode" value="merge" checked class="mt-0.5">
+            <div>
+              <span class="text-xs font-semibold text-oxford-800">Fusionar con datos existentes</span>
+              <p class="text-[11px] text-oxford-500">Agrega los nuevos y actualiza los SKUs que ya existan.</p>
+            </div>
+          </label>
+          <label class="flex items-start space-x-3 cursor-pointer">
+            <input type="radio" name="importMode" value="append" class="mt-0.5">
+            <div>
+              <span class="text-xs font-semibold text-oxford-800">Solo agregar nuevos</span>
+              <p class="text-[11px] text-oxford-500">Ignora los SKUs que ya estén registrados.</p>
+            </div>
+          </label>
+          <label class="flex items-start space-x-3 cursor-pointer">
+            <input type="radio" name="importMode" value="replace" class="mt-0.5">
+            <div>
+              <span class="text-xs font-semibold text-rose-700">Reemplazar todo</span>
+              <p class="text-[11px] text-rose-600">⚠️ Borra todos los datos actuales y deja solo los del Excel.</p>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-6 py-4 border-t border-oxford-200 bg-oxford-50 flex justify-end space-x-3 flex-shrink-0">
+      <button onclick="Excel.closeImportModal()" class="px-4 py-2 text-xs font-semibold text-oxford-600 hover:bg-oxford-200 rounded-lg transition">Cancelar</button>
+      <button id="importConfirmBtn" onclick="Excel.confirmImport()" class="hidden px-4 py-2 text-xs font-semibold bg-brand-500 text-white rounded-lg hover:bg-brand-600 shadow-sm transition">
+        <i class="fa-solid fa-check mr-1"></i>Confirmar importación
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= SCRIPTS ======================= -->
+<script src="assets/js/config.js"></script>
+<script src="assets/js/utils.js"></script>
+<script src="assets/js/db.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/render.js"></script>
+<script src="assets/js/modals.js"></script>
+<script src="assets/js/excel.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
