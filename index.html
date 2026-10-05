@@ -43,7 +43,6 @@
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <!-- CSS propio -->
 <link rel="stylesheet" href="assets/css/styles.css">
@@ -213,7 +212,6 @@
 <div id="splitDetailModal" class="fixed inset-0 bg-oxford-900/80 backdrop-blur-md flex items-center justify-center hidden z-50 p-0 sm:p-3 lg:p-6">
   <div class="bg-white rounded-none sm:rounded-2xl w-full max-w-7xl h-full sm:h-[92vh] shadow-2xl overflow-hidden flex flex-col border border-oxford-200">
 
-    <!-- Header -->
     <div class="bg-oxford-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between text-white border-b border-oxford-700 flex-shrink-0">
       <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
         <div class="bg-brand-500 p-2 rounded-xl text-white shadow-md flex-shrink-0"><i class="fa-solid fa-box-open text-base sm:text-xl"></i></div>
@@ -230,7 +228,6 @@
       </div>
     </div>
 
-    <!-- TABS (solo visible en < lg) -->
     <div class="lg:hidden flex bg-oxford-100 border-b border-oxford-200 flex-shrink-0">
       <button id="tabDetailBtn" onclick="Modals.switchTab('detail')" class="flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 border-brand-500 text-brand-600 transition">
         <i class="fa-solid fa-circle-info"></i> Detalles
@@ -240,10 +237,8 @@
       </button>
     </div>
 
-    <!-- Contenido -->
     <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-0">
 
-      <!-- Panel Info -->
       <div id="detailPanelInfo" class="lg:col-span-5 overflow-y-auto bg-oxford-50 lg:border-r border-oxford-200 flex flex-col">
         <div class="p-4 sm:p-6 flex-1">
           <div class="flex items-center justify-between mb-3">
@@ -280,7 +275,6 @@
           </div>
         </div>
 
-        <!-- Botones acción (sticky bottom en móvil) -->
         <div id="detailAdminActions" class="sticky bottom-0 lg:static p-4 lg:p-6 pt-3 lg:pt-4 bg-white lg:bg-transparent border-t border-oxford-200 flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2">
           <div class="flex gap-2 w-full sm:w-auto">
             <button id="detailEditBtn" onclick="Modals.editFromDetail()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center space-x-2"><i class="fa-solid fa-pen"></i><span>Editar</span></button>
@@ -293,7 +287,6 @@
         </div>
       </div>
 
-      <!-- Panel PDF -->
       <div id="detailPanelPdf" class="hidden lg:flex lg:col-span-7 bg-oxford-900 relative flex-col min-h-0">
         <div class="bg-oxford-800/90 text-oxford-300 px-4 py-2 text-xs font-semibold flex items-center justify-between border-b border-oxford-700 flex-shrink-0">
           <span class="flex items-center space-x-2"><i class="fa-solid fa-file-pdf text-rose-500"></i><span>Visor de PDF</span></span>
@@ -464,6 +457,8 @@
 </div>
 
 <!-- ======================= SCRIPTS ======================= -->
+<!-- ⚠️ ORDEN CRÍTICO: xlsx va PRIMERO, luego los módulos en orden de dependencia -->
+<script src="assets/js/xlsx.full.min.js"></script>
 <script src="assets/js/config.js"></script>
 <script src="assets/js/utils.js"></script>
 <script src="assets/js/db.js"></script>
